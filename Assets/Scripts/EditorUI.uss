@@ -1,0 +1,162 @@
+/* Ruby GameEditor UI Styles */
+
+/* Root container */
+.unity-ui-document__root {
+    flex-grow: 1;
+    background-color: #2D2D30;
+}
+
+/* Tool Palette */
+#tool-palette {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 200px;
+    background-color: #383838;
+    border-radius: 5px;
+    padding: 10px;
+    border-width: 1px;
+    border-color: #555555;
+}
+
+.tool-category {
+    margin-bottom: 15px;
+}
+
+.category-header {
+    font-size: 14px;
+    color: #CCCCCC;
+    margin-bottom: 8px;
+    -unity-font-style: bold;
+}
+
+.tool-button {
+    margin: 2px;
+    background-color: #4A4A4A;
+    border-color: #5A5A5A;
+    border-width: 1px;
+    color: #FFFFFF;
+    border-radius: 3px;
+}
+
+.tool-button:hover {
+    background-color: #5A5A5A;
+    border-color: #6A6A6A;
+}
+
+.tool-button.selected {
+    background-color: #007ACC;
+    border-color: #1E90FF;
+}
+
+/* Inspector */
+#inspector {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 250px;
+    background-color: #383838;
+    border-radius: 5px;
+    padding: 10px;
+    border-width: 1px;
+    border-color: #555555;
+}
+
+.inspector-header {
+    font-size: 16px;
+    color: #CCCCCC;
+    margin-bottom: 10px;
+    -unity-font-style: bold;
+}
+
+.unity-foldout__toggle {
+    background-color: transparent;
+}
+
+.unity-foldout__text {
+    color: #CCCCCC;
+}
+
+.unity-float-field__label {
+    color: #CCCCCC;
+    min-width: 60px;
+}
+
+.unity-float-field__input {
+    background-color: #1E1E1E;
+    border-color: #555555;
+    color: #FFFFFF;
+}
+
+/* Status Bar */
+#status-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 25px;
+    background-color: #007ACC;
+    padding: 0 10px;
+    -unity-text-align: middle-center;
+}
+
+.status-text {
+    color: #FFFFFF;
+    font-size: 12px;
+}
+
+/* Hierarchy Panel */
+#hierarchy {
+    position: absolute;
+    left: 10px;
+    top: 250px;
+    width: 200px;
+    height: 300px;
+    background-color: #383838;
+    border-radius: 5px;
+    padding: 10px;
+    border-width: 1px;
+    border-color: #555555;
+}
+
+/* Preview Window */
+#preview-window {
+    position: absolute;
+    right: 10px;
+    bottom: 40px;
+    width: 250px;
+    height: 200px;
+    background-color: #383838;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #555555;
+}
+
+/* Scrollbars */
+.unity-scroll-view__vertical-scroller {
+    width: 12px;
+}
+
+.unity-scroller__slider {
+    background-color: #4A4A4A;
+    border-radius: 6px;
+}
+
+.unity-scroller__slider:hover {
+    background-color: #5A5A5A;
+}
+
+/* Toggle */
+.unity-toggle__label {
+    color: #FFFFFF;
+    font-size: 12px;
+}
+
+.unity-toggle__checkmark {
+    background-color: #1E1E1E;
+    border-color: #555555;
+}
+
+.unity-toggle__checkmark:checked {
+    background-color: #007ACC;
+}

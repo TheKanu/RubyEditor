@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <!-- Link to stylesheet -->
+    <Style src="EditorUI.uss" />
+    
+    <!-- Main container -->
+    <ui:VisualElement name="main-container" style="flex-grow: 1;">
+        
+        <!-- Tool Palette -->
+        <ui:VisualElement name="tool-palette">
+            <ui:Label text="Tools" class="inspector-header" />
+            <!-- Tool buttons will be added programmatically -->
+        </ui:VisualElement>
+        
+        <!-- Inspector Panel -->
+        <ui:VisualElement name="inspector">
+            <ui:Label text="Properties" class="inspector-header" />
+            <!-- Properties will be added programmatically -->
+        </ui:VisualElement>
+        
+        <!-- Hierarchy Panel -->
+        <ui:VisualElement name="hierarchy">
+            <ui:Label text="Hierarchy" class="inspector-header" />
+            <ui:ScrollView name="hierarchy-scroll">
+                <ui:VisualElement name="hierarchy-content" />
+            </ui:ScrollView>
+        </ui:VisualElement>
+        
+        <!-- Preview Window -->
+        <ui:VisualElement name="preview-window">
+            <ui:Label text="Preview" class="inspector-header" />
+            <ui:VisualElement name="preview-content" style="flex-grow: 1; background-color: #1E1E1E;" />
+        </ui:VisualElement>
+        
+        <!-- Status Bar -->
+        <ui:VisualElement name="status-bar">
+            <ui:Label name="coordinates-label" text="X: 0.0 Y: 0.0 Z: 0.0" class="status-text" />
+            <ui:Label name="mode-label" text="Mode: Select" class="status-text" />
+            <ui:Toggle name="grid-snap-toggle" label="Grid Snap" value="true" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>
