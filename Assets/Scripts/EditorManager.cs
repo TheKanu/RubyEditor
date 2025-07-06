@@ -52,4 +52,10 @@ namespace RubyEditor.Core
         Terrain,
         Navigation
     }
+
+    // Define a basic Tool class or replace with your actual Tool implementation
+    public class Tool
+    {
+        // Add properties and methods as needed
+    }
 }
