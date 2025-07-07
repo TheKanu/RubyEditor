@@ -11,52 +11,52 @@ namespace RubyMMO.Editor
         public static void InitializeZoneEditor()
         {
             Debug.Log("=== Initializing Ruby MMO Zone Editor ===");
-            
+
             // Create folder structure
             CreateFolderStructure();
-            
+
             // Create prop database
             CreatePropDatabase();
-            
+
             // Create default materials
             CreateDefaultMaterials();
-            
+
             // Create zone template
             CreateZoneTemplate();
-            
+
             // Create example props
             CreateExampleProps();
-            
+
             // Open Zone Editor
             ZoneEditorWindow.ShowWindow();
-            
+
             Debug.Log("=== Zone Editor Setup Complete! ===");
-            EditorUtility.DisplayDialog("Setup Complete", 
+            EditorUtility.DisplayDialog("Setup Complete",
                 "Zone Editor has been initialized!\n\n" +
                 "• Folder structure created\n" +
                 "• Prop database created\n" +
                 "• Example assets generated\n\n" +
-                "The Zone Editor window is now open.", 
+                "The Zone Editor window is now open.",
                 "OK");
         }
-        
+
         [MenuItem("Ruby MMO/Setup/Create Test Zone")]
         public static void CreateTestZone()
         {
             // Create a test zone with some basic props
             GameObject zoneRoot = new GameObject("TestZone_ElwynnForest");
-            
+
             // Create terrain
             GameObject terrainObj = Terrain.CreateTerrainGameObject(null);
             terrainObj.transform.parent = zoneRoot.transform;
             terrainObj.name = "Terrain_Elwynn";
-            
+
             Terrain terrain = terrainObj.GetComponent<Terrain>();
             TerrainData terrainData = terrain.terrainData;
             terrainData.heightmapResolution = 257;
             terrainData.size = new Vector3(200, 30, 200);
             terrainObj.transform.position = new Vector3(-100, 0, -100);
-            
+
             // Add some trees
             for (int i = 0; i < 20; i++)
             {
@@ -65,30 +65,30 @@ namespace RubyMMO.Editor
                     0,
                     Random.Range(-90f, 90f)
                 );
-                
+
                 GameObject tree = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
                 tree.name = $"Tree_{i}";
                 tree.transform.parent = zoneRoot.transform;
                 tree.transform.position = randomPos;
                 tree.transform.localScale = new Vector3(1, 3, 1);
-                
+
                 // Add leaves
                 GameObject leaves = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 leaves.name = "Leaves";
                 leaves.transform.parent = tree.transform;
                 leaves.transform.localPosition = new Vector3(0, 1.5f, 0);
                 leaves.transform.localScale = new Vector3(3, 2, 3);
-                
+
                 // Color
                 tree.GetComponent<Renderer>().material.color = new Color(0.4f, 0.2f, 0.1f);
                 leaves.GetComponent<Renderer>().material.color = new Color(0.2f, 0.6f, 0.2f);
             }
-            
+
             // Add player spawn
             GameObject playerSpawn = new GameObject("PlayerSpawn");
             playerSpawn.transform.parent = zoneRoot.transform;
             playerSpawn.transform.position = Vector3.zero;
-            
+
             // Add directional light
             GameObject lightObj = new GameObject("Sun");
             lightObj.transform.parent = zoneRoot.transform;
@@ -97,21 +97,21 @@ namespace RubyMMO.Editor
             light.transform.rotation = Quaternion.Euler(45f, -30f, 0);
             light.intensity = 1.2f;
             light.color = new Color(1f, 0.95f, 0.8f);
-            
+
             // Setup fog
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogStartDistance = 50f;
             RenderSettings.fogEndDistance = 150f;
             RenderSettings.fogColor = new Color(0.7f, 0.8f, 0.9f);
-            
+
             Debug.Log("Test zone 'Elwynn Forest' created!");
         }
-        
+
         static void CreateFolderStructure()
         {
             string basePath = "Assets/RubyMMO";
-            
+
             string[] folders = new string[]
             {
                 basePath,
@@ -136,7 +136,7 @@ namespace RubyMMO.Editor
                 $"{basePath}/Editor/Icons",
                 $"{basePath}/Resources"
             };
-            
+
             foreach (string folder in folders)
             {
                 if (!AssetDatabase.IsValidFolder(folder))
@@ -147,14 +147,14 @@ namespace RubyMMO.Editor
                     Debug.Log($"Created folder: {folder}");
                 }
             }
-            
+
             AssetDatabase.Refresh();
         }
-        
+
         static void CreatePropDatabase()
         {
             string dbPath = "Assets/RubyMMO/Resources/PropDatabase.asset";
-            
+
             if (!File.Exists(dbPath))
             {
                 PropDatabase database = ScriptableObject.CreateInstance<PropDatabase>();
@@ -163,18 +163,18 @@ namespace RubyMMO.Editor
                 Debug.Log("Created Prop Database");
             }
         }
-        
+
         static void CreateDefaultMaterials()
         {
             // Grass material
             CreateMaterial("Grass", new Color(0.3f, 0.6f, 0.2f), "Assets/RubyMMO/Materials/Terrain/");
-            
+
             // Stone material  
             CreateMaterial("Stone", new Color(0.5f, 0.5f, 0.5f), "Assets/RubyMMO/Materials/Terrain/");
-            
+
             // Wood material
             CreateMaterial("Wood", new Color(0.4f, 0.25f, 0.1f), "Assets/RubyMMO/Materials/Props/");
-            
+
             // Water material (transparent)
             Material water = CreateMaterial("Water", new Color(0.2f, 0.4f, 0.6f, 0.8f), "Assets/RubyMMO/Materials/Terrain/");
             if (water != null)
@@ -189,16 +189,16 @@ namespace RubyMMO.Editor
                 water.renderQueue = 3000;
             }
         }
-        
+
         static Material CreateMaterial(string name, Color color, string path)
         {
             string fullPath = $"{path}Mat_{name}.mat";
-            
+
             if (!File.Exists(fullPath))
             {
                 Material mat = new Material(Shader.Find("Standard"));
                 mat.color = color;
-                
+
                 AssetDatabase.CreateAsset(mat, fullPath);
                 AssetDatabase.SaveAssets();
                 Debug.Log($"Created material: {name}");
@@ -206,11 +206,11 @@ namespace RubyMMO.Editor
             }
             return null;
         }
-        
+
         static void CreateZoneTemplate()
         {
             string templatePath = "Assets/RubyMMO/Zones/ZoneTemplate.asset";
-            
+
             if (!File.Exists(templatePath))
             {
                 ZoneData template = ScriptableObject.CreateInstance<ZoneData>();
@@ -221,79 +221,79 @@ namespace RubyMMO.Editor
                 template.ambientColor = new Color(0.5f, 0.5f, 0.5f);
                 template.fogColor = new Color(0.7f, 0.8f, 0.9f);
                 template.fogDensity = 0.01f;
-                
+
                 AssetDatabase.CreateAsset(template, templatePath);
                 AssetDatabase.SaveAssets();
                 Debug.Log("Created zone template");
             }
         }
-        
+
         static void CreateExampleProps()
         {
             // Tree
             GameObject tree = CreateTreeProp();
             SaveAsPrefab(tree, "Assets/RubyMMO/Props/Nature/Prop_Tree_Basic.prefab");
-            
+
             // Rock
             GameObject rock = CreateRockProp();
             SaveAsPrefab(rock, "Assets/RubyMMO/Props/Nature/Prop_Rock_Basic.prefab");
-            
+
             // House
             GameObject house = CreateHouseProp();
             SaveAsPrefab(house, "Assets/RubyMMO/Props/Buildings/Prop_House_Basic.prefab");
-            
+
             // Lamp post
             GameObject lamp = CreateLampProp();
             SaveAsPrefab(lamp, "Assets/RubyMMO/Props/Lights/Prop_LampPost.prefab");
         }
-        
+
         static GameObject CreateTreeProp()
         {
             GameObject tree = new GameObject("Tree");
-            
+
             // Trunk
             GameObject trunk = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             trunk.name = "Trunk";
             trunk.transform.parent = tree.transform;
             trunk.transform.localScale = new Vector3(0.5f, 2f, 0.5f);
             trunk.transform.localPosition = new Vector3(0, 1, 0);
-            
+
             // Leaves
             GameObject leaves = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             leaves.name = "Leaves";
             leaves.transform.parent = tree.transform;
             leaves.transform.localScale = new Vector3(2f, 1.5f, 2f);
             leaves.transform.localPosition = new Vector3(0, 2.5f, 0);
-            
+
             // Materials
             trunk.GetComponent<Renderer>().material = AssetDatabase.LoadAssetAtPath<Material>("Assets/RubyMMO/Materials/Props/Mat_Wood.mat");
             leaves.GetComponent<Renderer>().material = AssetDatabase.LoadAssetAtPath<Material>("Assets/RubyMMO/Materials/Terrain/Mat_Grass.mat");
-            
+
             return tree;
         }
-        
+
         static GameObject CreateRockProp()
         {
             GameObject rock = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             rock.name = "Rock";
             rock.transform.localScale = new Vector3(1.5f, 1f, 1.2f);
-            
+
             rock.GetComponent<Renderer>().material = AssetDatabase.LoadAssetAtPath<Material>("Assets/RubyMMO/Materials/Terrain/Mat_Stone.mat");
-            
+
             return rock;
         }
-        
+
         static GameObject CreateHouseProp()
         {
             GameObject house = new GameObject("House");
-            
+
             // Base
             GameObject baseObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
             baseObj.name = "Base";
             baseObj.transform.parent = house.transform;
             baseObj.transform.localScale = new Vector3(4f, 3f, 4f);
             baseObj.transform.localPosition = new Vector3(0, 1.5f, 0);
-            
+
             // Roof
             GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
             roof.name = "Roof";
@@ -301,35 +301,35 @@ namespace RubyMMO.Editor
             roof.transform.localScale = new Vector3(5f, 1f, 5f);
             roof.transform.localPosition = new Vector3(0, 3.5f, 0);
             roof.transform.localRotation = Quaternion.Euler(0, 45, 0);
-            
+
             // Door
             GameObject door = GameObject.CreatePrimitive(PrimitiveType.Cube);
             door.name = "Door";
             door.transform.parent = house.transform;
             door.transform.localScale = new Vector3(1f, 2f, 0.1f);
             door.transform.localPosition = new Vector3(0, 1f, 2f);
-            
+
             return house;
         }
-        
+
         static GameObject CreateLampProp()
         {
             GameObject lamp = new GameObject("LampPost");
-            
+
             // Post
             GameObject post = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             post.name = "Post";
             post.transform.parent = lamp.transform;
             post.transform.localScale = new Vector3(0.2f, 2f, 0.2f);
             post.transform.localPosition = new Vector3(0, 1f, 0);
-            
+
             // Light holder
             GameObject holder = GameObject.CreatePrimitive(PrimitiveType.Cube);
             holder.name = "Holder";
             holder.transform.parent = lamp.transform;
             holder.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             holder.transform.localPosition = new Vector3(0, 2.5f, 0);
-            
+
             // Add Light component
             GameObject lightObj = new GameObject("Light");
             lightObj.transform.parent = lamp.transform;
@@ -339,10 +339,10 @@ namespace RubyMMO.Editor
             light.range = 10f;
             light.intensity = 2f;
             light.color = new Color(1f, 0.9f, 0.7f);
-            
+
             return lamp;
         }
-        
+
         static void SaveAsPrefab(GameObject obj, string path)
         {
             // Ensure directory exists
@@ -352,13 +352,13 @@ namespace RubyMMO.Editor
                 Directory.CreateDirectory(directory);
                 AssetDatabase.Refresh();
             }
-            
+
             // Save prefab
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(obj, path);
             DestroyImmediate(obj);
-            
+
             Debug.Log($"Created prefab: {Path.GetFileName(path)}");
-            
+
             // Add to prop database
             PropDatabase db = PropDatabase.GetDatabase();
             if (db != null)
@@ -368,7 +368,7 @@ namespace RubyMMO.Editor
                 Debug.Log($"Remember to add {prefab.name} to the Prop Database!");
             }
         }
-        
+
         [MenuItem("Ruby MMO/Documentation/Zone Editor Guide")]
         public static void OpenDocumentation()
         {

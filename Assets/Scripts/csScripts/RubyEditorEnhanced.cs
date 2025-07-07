@@ -314,7 +314,7 @@ namespace RubyEditor.Core
             }
 
             // Clear terrain
-            Terrain[] terrains = FindObjectsOfType<Terrain>();
+            Terrain[] terrains = FindObjectsByType<Terrain>(FindObjectsSortMode.None);
             foreach (var terrain in terrains)
             {
                 DestroyImmediate(terrain.gameObject);
