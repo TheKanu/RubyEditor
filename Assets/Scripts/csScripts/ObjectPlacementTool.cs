@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using RubyEditor.UI; // Add this line if EditorUIManager is in RubyEditor.UI namespace
+using RubyEditor;
+using RubyEditor.Core; // Add this line if EditorManager is in RubyEditor namespace
 
 namespace RubyEditor.Tools
 {
@@ -128,7 +131,7 @@ namespace RubyEditor.Tools
                 Vector3 position = hit.point;
 
                 // Snap to grid if enabled
-                if (EditorManager.Instance.gridSystem.snapToGrid)
+                if (EditorManager.Instance.gridSystem != null)
                 {
                     position = EditorManager.Instance.gridSystem.SnapToGrid(position);
                 }
@@ -226,9 +229,6 @@ namespace RubyEditor.Tools
                 float scale = Random.Range(scaleRange.x, scaleRange.y);
                 newObject.transform.localScale = Vector3.one * scale;
             }
-
-            // Register undo
-            // Undo.RegisterCreatedObjectUndo(newObject, "Place Object");
         }
 
         void PlaceBrushObjects()
