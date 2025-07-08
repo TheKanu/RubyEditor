@@ -355,7 +355,7 @@ namespace RubyMMO.Editor
 
             // Save prefab
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(obj, path);
-            DestroyImmediate(obj);
+            Object.DestroyImmediate(obj);
 
             Debug.Log($"Created prefab: {Path.GetFileName(path)}");
 
