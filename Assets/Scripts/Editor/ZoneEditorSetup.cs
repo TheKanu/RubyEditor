@@ -353,9 +353,9 @@ namespace RubyMMO.Editor
                 AssetDatabase.Refresh();
             }
 
-            // Save prefab
+            // Save prefab - HIER WAR DER FEHLER
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(obj, path);
-            Object.DestroyImmediate(obj);
+            UnityEngine.Object.DestroyImmediate(obj);
 
             Debug.Log($"Created prefab: {Path.GetFileName(path)}");
 
