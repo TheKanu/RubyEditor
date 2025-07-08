@@ -1,5 +1,11 @@
 using UnityEngine;
 using RubyEditor.Core;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class RubyEditorQuickStart : MonoBehaviour
 {
@@ -77,7 +83,7 @@ public class RubyEditorQuickStart : MonoBehaviour
         }
     }
 
-    void AddTestProps()
+    public void AddTestProps()
     {
         // Create prop container
         GameObject propContainer = GameObject.Find("TestProps");
@@ -106,7 +112,7 @@ public class RubyEditorQuickStart : MonoBehaviour
         renderer.material.color = Random.ColorHSV(0f, 1f, 0.5f, 1f, 0.5f, 1f);
     }
 
-    void ShowQuickHelp()
+    public void ShowQuickHelp()
     {
         string helpText = @"
 🎮 RUBY EDITOR CONTROLS
@@ -152,13 +158,13 @@ ESC - Cancel Tool
     void Update()
     {
         // Quick toggle help
-        if (Input.GetKeyDown(KeyCode.F1))
+        if (IsKeyDown(KeyCode.F1))
         {
             ShowQuickHelp();
         }
 
         // Quick save
-        if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.S))
+        if (IsKeyPressed(KeyCode.LeftControl) && IsKeyDown(KeyCode.S))
         {
             QuickSave();
         }
@@ -173,11 +179,42 @@ ESC - Cancel Tool
             Debug.Log("💾 Zone saved!");
         }
     }
+
+    // Input System compatibility methods
+    bool IsKeyPressed(KeyCode key)
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && GetKeyFromKeyCode(key).isPressed;
+#else
+        return Input.GetKey(key);
+#endif
+    }
+
+    bool IsKeyDown(KeyCode key)
+    {
+#if ENABLE_INPUT_SYSTEM
+        return Keyboard.current != null && GetKeyFromKeyCode(key).wasPressedThisFrame;
+#else
+        return Input.GetKeyDown(key);
+#endif
+    }
+
+#if ENABLE_INPUT_SYSTEM
+    UnityEngine.InputSystem.Controls.KeyControl GetKeyFromKeyCode(KeyCode keyCode)
+    {
+        switch (keyCode)
+        {
+            case KeyCode.F1: return Keyboard.current.f1Key;
+            case KeyCode.LeftControl: return Keyboard.current.leftCtrlKey;
+            case KeyCode.S: return Keyboard.current.sKey;
+            default: return Keyboard.current.spaceKey;
+        }
+    }
+#endif
 }
 
 // Extension for easy testing in Inspector
 #if UNITY_EDITOR
-using UnityEditor;
 
 [CustomEditor(typeof(RubyEditorQuickStart))]
 public class RubyEditorQuickStartEditor : Editor

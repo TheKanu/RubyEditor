@@ -86,7 +86,14 @@ namespace RubyMMO.Editor
 
             if (GUILayout.Button("New Zone", EditorStyles.toolbarButton, GUILayout.Width(80)))
             {
-                CreateNewZone();
+                try
+                {
+                    CreateNewZone();
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("Error creating new zone: " + e.Message);
+                }
             }
 
             if (GUILayout.Button("Load Zone", EditorStyles.toolbarButton, GUILayout.Width(80)))
@@ -126,7 +133,7 @@ namespace RubyMMO.Editor
                     EditorGUILayout.Space(5);
 
                     EditorGUILayout.LabelField("Zone Bounds", EditorStyles.boldLabel);
-                    currentZone.zoneSize = EditorGUILayout.Vector2Field("Size (X,Z)", currentZone.zoneSize);
+                    currentZone.zoneSize = EditorGUILayout.Vector2IntField("Size (X,Z)", currentZone.zoneSize);
 
                     EditorGUILayout.Space(5);
 
@@ -262,7 +269,14 @@ namespace RubyMMO.Editor
 
                 if (GUILayout.Button("Create Terrain", GUILayout.Height(30)))
                 {
-                    CreateTerrain();
+                    if (currentZone != null)
+                    {
+                        CreateTerrain();
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Cannot create terrain: No zone selected. Create a new zone first.");
+                    }
                 }
 
                 EditorGUILayout.Space(5);
@@ -419,31 +433,80 @@ namespace RubyMMO.Editor
 
         void CreateTerrain()
         {
-            GameObject terrainObj = Terrain.CreateTerrainGameObject(null);
-            terrainObj.name = $"Terrain_{currentZone.zoneName}";
+            try
+            {
+                if (currentZone == null)
+                {
+                    Debug.LogError("Cannot create terrain: currentZone is null");
+                    return;
+                }
+                
+                GameObject terrainObj = Terrain.CreateTerrainGameObject(null);
+                if (terrainObj == null)
+                {
+                    Debug.LogError("Failed to create terrain GameObject");
+                    return;
+                }
+                
+                terrainObj.name = $"Terrain_{currentZone.zoneName ?? "Unknown"}";
 
-            Terrain terrain = terrainObj.GetComponent<Terrain>();
-            TerrainData terrainData = terrain.terrainData;
+                Terrain terrain = terrainObj.GetComponent<Terrain>();
+                if (terrain == null)
+                {
+                    Debug.LogError("Terrain component not found on terrain GameObject");
+                    return;
+                }
+                
+                TerrainData terrainData = terrain.terrainData;
+                if (terrainData == null)
+                {
+                    Debug.LogError("TerrainData is null");
+                    return;
+                }
 
-            // Set terrain size based on zone size
-            terrainData.heightmapResolution = 513;
-            terrainData.size = new Vector3(currentZone.zoneSize.x, 100, currentZone.zoneSize.y);
+                // Set terrain size based on zone size (with fallback)
+                Vector2 zoneSize = new Vector2(currentZone.zoneSize.x, currentZone.zoneSize.y);
+                if (zoneSize.x <= 0) zoneSize.x = 200f;
+                if (zoneSize.y <= 0) zoneSize.y = 200f;
+                
+                terrainData.heightmapResolution = 513;
+                terrainData.size = new Vector3(zoneSize.x, 100, zoneSize.y);
 
-            // Center terrain
-            terrainObj.transform.position = new Vector3(-currentZone.zoneSize.x / 2, 0, -currentZone.zoneSize.y / 2);
+                // Center terrain
+                terrainObj.transform.position = new Vector3(-zoneSize.x / 2, 0, -zoneSize.y / 2);
 
-            // Apply basic textures if available
-            ApplyDefaultTerrainTextures(terrain);
+                // Apply basic textures if available
+                ApplyDefaultTerrainTextures(terrain);
+                
+                Debug.Log($"Terrain created successfully: {terrainObj.name}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error creating terrain: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         void ApplyDefaultTerrainTextures(Terrain terrain)
         {
+            if (terrain == null)
+            {
+                Debug.LogWarning("Cannot apply textures: terrain is null");
+                return;
+            }
+            
             // This would load default textures from Resources or a database
             // For now, just a placeholder
+            Debug.Log("Default terrain textures applied (placeholder)");
         }
 
         void StartPlacingProp(PropData prop)
         {
+            if (prop == null)
+            {
+                Debug.LogWarning("Cannot start placing prop: prop is null");
+                return;
+            }
+            
             isPlacingMode = true;
             lastTool = Tools.current;
             Tools.current = Tool.None;
@@ -452,24 +515,43 @@ namespace RubyMMO.Editor
             if (prop.prefab != null)
             {
                 previewObject = Instantiate(prop.prefab);
-                previewObject.name = "Preview_" + prop.name;
+                previewObject.name = "Preview_" + (prop.name ?? "Unknown");
 
                 // Make preview semi-transparent
                 SetPreviewMaterial(previewObject);
+            }
+            else
+            {
+                Debug.LogWarning($"Cannot create preview: prop.prefab is null for {prop.name}");
             }
         }
 
         void SetPreviewMaterial(GameObject obj)
         {
+            if (obj == null)
+            {
+                Debug.LogWarning("Cannot set preview material: object is null");
+                return;
+            }
+            
             var renderers = obj.GetComponentsInChildren<Renderer>();
+            if (renderers == null) return;
+            
             foreach (var renderer in renderers)
             {
+                if (renderer == null) continue;
+                
                 var materials = renderer.sharedMaterials;
+                if (materials == null) continue;
+                
                 for (int i = 0; i < materials.Length; i++)
                 {
-                    Material previewMat = new Material(materials[i]);
-                    previewMat.color = new Color(previewMat.color.r, previewMat.color.g, previewMat.color.b, 0.5f);
-                    materials[i] = previewMat;
+                    if (materials[i] != null)
+                    {
+                        Material previewMat = new Material(materials[i]);
+                        previewMat.color = new Color(previewMat.color.r, previewMat.color.g, previewMat.color.b, 0.5f);
+                        materials[i] = previewMat;
+                    }
                 }
                 renderer.sharedMaterials = materials;
             }
@@ -479,18 +561,36 @@ namespace RubyMMO.Editor
         {
             if (previewObject != null)
             {
-                // Create actual prop
-                GameObject prop = Instantiate(previewObject);
-                prop.name = previewObject.name.Replace("Preview_", "");
-
-                // Register undo
-                Undo.RegisterCreatedObjectUndo(prop, "Place Prop");
-
-                // Continue placing or finish
-                if (!Event.current.shift)
+                try
                 {
-                    CancelPlacement();
+                    // Create actual prop
+                    GameObject prop = Instantiate(previewObject);
+                    if (prop != null)
+                    {
+                        prop.name = previewObject.name.Replace("Preview_", "");
+
+                        // Register undo
+                        Undo.RegisterCreatedObjectUndo(prop, "Place Prop");
+
+                        // Continue placing or finish
+                        if (Event.current == null || !Event.current.shift)
+                        {
+                            CancelPlacement();
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed to instantiate prop");
+                    }
                 }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Error placing prop: {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning("Cannot place prop: previewObject is null");
             }
         }
 
@@ -511,6 +611,8 @@ namespace RubyMMO.Editor
 
         void DrawZoneBounds()
         {
+            if (currentZone == null) return;
+            
             Handles.color = new Color(1, 1, 0, 0.3f);
 
             Vector3[] corners = new Vector3[] {
@@ -525,8 +627,12 @@ namespace RubyMMO.Editor
 
         void DrawSpawnPointGizmos()
         {
+            if (currentZone == null || currentZone.spawnPoints == null) return;
+            
             foreach (var spawn in currentZone.spawnPoints)
             {
+                if (spawn == null) continue;
+                
                 Vector3 pos = spawn.position;
 
                 // Different colors for different spawn types
@@ -537,13 +643,22 @@ namespace RubyMMO.Editor
                 Handles.DrawLine(pos, pos + Vector3.up * 2f);
 
                 // Draw label
-                Handles.Label(pos + Vector3.up * 2.5f, spawn.name);
+                Handles.Label(pos + Vector3.up * 2.5f, spawn.name ?? "Unnamed Spawn");
             }
         }
 
         void AddSpawnPoint(SpawnType type, Vector3? position = null)
         {
-            if (currentZone == null) return;
+            if (currentZone == null)
+            {
+                Debug.LogWarning("Cannot add spawn point: currentZone is null");
+                return;
+            }
+            
+            if (currentZone.spawnPoints == null)
+            {
+                currentZone.spawnPoints = new List<SpawnPoint>();
+            }
 
             SpawnPoint spawn = new SpawnPoint();
             spawn.type = type;
@@ -564,7 +679,7 @@ namespace RubyMMO.Editor
         Vector3 GetSceneViewCenter()
         {
             SceneView sceneView = SceneView.lastActiveSceneView;
-            if (sceneView != null)
+            if (sceneView != null && sceneView.camera != null && sceneView.camera.transform != null)
             {
                 return sceneView.camera.transform.position + sceneView.camera.transform.forward * 10f;
             }
@@ -573,26 +688,49 @@ namespace RubyMMO.Editor
 
         void SelectSpawnPoint(SpawnPoint spawn)
         {
+            if (spawn == null || string.IsNullOrEmpty(spawn.name))
+            {
+                Debug.LogWarning("Cannot select spawn point: spawn is null or has no name");
+                return;
+            }
+            
             GameObject marker = GameObject.Find(spawn.name);
             if (marker != null)
             {
                 Selection.activeGameObject = marker;
                 SceneView.FrameLastActiveSceneView();
             }
+            else
+            {
+                Debug.LogWarning($"Spawn point marker not found: {spawn.name}");
+            }
         }
 
         void RemoveSpawnPoint(int index)
         {
-            if (currentZone != null && index < currentZone.spawnPoints.Count)
+            if (currentZone == null || currentZone.spawnPoints == null)
             {
-                var spawn = currentZone.spawnPoints[index];
+                Debug.LogWarning("Cannot remove spawn point: currentZone or spawnPoints is null");
+                return;
+            }
+            
+            if (index < 0 || index >= currentZone.spawnPoints.Count)
+            {
+                Debug.LogWarning($"Invalid spawn point index: {index}");
+                return;
+            }
+            
+            var spawn = currentZone.spawnPoints[index];
+            if (spawn != null && !string.IsNullOrEmpty(spawn.name))
+            {
                 GameObject marker = GameObject.Find(spawn.name);
                 if (marker != null)
                 {
                     DestroyImmediate(marker);
                 }
-                currentZone.spawnPoints.RemoveAt(index);
             }
+            
+            currentZone.spawnPoints.RemoveAt(index);
         }
 
         void SaveZone()
@@ -635,52 +773,128 @@ namespace RubyMMO.Editor
 
         void LoadZoneIntoScene()
         {
-            // Clear existing zone objects
-            GameObject[] zoneObjects = GameObject.FindGameObjectsWithTag("ZoneObject");
-            foreach (var obj in zoneObjects)
+            if (currentZone == null)
             {
-                DestroyImmediate(obj);
+                Debug.LogError("Cannot load zone: currentZone is null");
+                return;
             }
-
-            // Recreate zone
-            CreateZoneGameObject();
-
-            // Load spawn points
-            foreach (var spawn in currentZone.spawnPoints)
+            
+            try
             {
-                GameObject marker = new GameObject(spawn.name);
-                marker.transform.position = spawn.position;
-                marker.transform.rotation = spawn.rotation;
-                marker.AddComponent<SpawnPointMarker>().spawnPoint = spawn;
-            }
+                // Clear existing zone objects
+                GameObject[] zoneObjects = GameObject.FindGameObjectsWithTag("ZoneObject");
+                foreach (var obj in zoneObjects)
+                {
+                    if (obj != null)
+                    {
+                        DestroyImmediate(obj);
+                    }
+                }
 
-            // Apply environment settings
-            RenderSettings.ambientLight = currentZone.ambientColor;
-            RenderSettings.fogColor = currentZone.fogColor;
-            RenderSettings.fogDensity = currentZone.fogDensity;
-            RenderSettings.fog = currentZone.fogDensity > 0;
+                // Recreate zone
+                CreateZoneGameObject();
+
+                // Load spawn points
+                if (currentZone.spawnPoints != null)
+                {
+                    foreach (var spawn in currentZone.spawnPoints)
+                    {
+                        if (spawn != null)
+                        {
+                            GameObject marker = new GameObject(spawn.name ?? "Unnamed Spawn");
+                            marker.transform.position = spawn.position;
+                            marker.transform.rotation = spawn.rotation;
+                            marker.AddComponent<SpawnPointMarker>().spawnPoint = spawn;
+                        }
+                    }
+                }
+
+                // Apply environment settings
+                RenderSettings.ambientLight = currentZone.ambientColor;
+                RenderSettings.fogColor = currentZone.fogColor;
+                RenderSettings.fogDensity = currentZone.fogDensity;
+                RenderSettings.fog = currentZone.fogDensity > 0;
+                
+                Debug.Log($"Zone loaded into scene: {currentZone.zoneName}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error loading zone into scene: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         void CreateZoneGameObject()
         {
-            GameObject zoneRoot = new GameObject($"Zone_{currentZone.zoneName}");
-            zoneRoot.tag = "ZoneObject";
+            try
+            {
+                if (currentZone == null)
+                {
+                    Debug.LogError("Cannot create zone GameObject: currentZone is null");
+                    return;
+                }
+                
+                string zoneName = currentZone.zoneName ?? "Unknown";
+                GameObject zoneRoot = new GameObject($"Zone_{zoneName}");
+                
+                // Set tag (will be created automatically by RubyEditorSetup)
+                try
+                {
+                    zoneRoot.tag = "ZoneObject";
+                }
+                catch (UnityException)
+                {
+                    Debug.LogWarning("ZoneObject tag not found, using default tag");
+                }
 
-            // Add zone bounds visualizer
-            GameObject boundsObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            boundsObj.name = "ZoneBounds";
-            boundsObj.transform.parent = zoneRoot.transform;
-            boundsObj.transform.localScale = new Vector3(currentZone.zoneSize.x, 0.1f, currentZone.zoneSize.y);
-            boundsObj.transform.position = new Vector3(0, -0.05f, 0);
+                // Add zone bounds visualizer
+                GameObject boundsObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                if (boundsObj == null)
+                {
+                    Debug.LogError("Failed to create bounds visualizer");
+                    return;
+                }
+                
+                boundsObj.name = "ZoneBounds";
+                boundsObj.transform.parent = zoneRoot.transform;
+                boundsObj.transform.position = new Vector3(0, -0.05f, 0);
 
-            // Make it transparent
-            Renderer renderer = boundsObj.GetComponent<Renderer>();
-            Material mat = new Material(Shader.Find("Transparent/Diffuse"));
-            mat.color = new Color(1, 1, 0, 0.1f);
-            renderer.material = mat;
+                // Make it transparent
+                Renderer renderer = boundsObj.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    Shader shader = Shader.Find("Transparent/Diffuse");
+                    if (shader != null)
+                    {
+                        Material mat = new Material(shader);
+                        mat.color = new Color(1, 1, 0, 0.1f);
+                        renderer.material = mat;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Transparent/Diffuse shader not found");
+                    }
+                }
+                
+                // Add safety check for zoneSize
+                Vector2 zoneSize = new Vector2(currentZone.zoneSize.x, currentZone.zoneSize.y);
+                if (zoneSize.x <= 0) zoneSize.x = 200f;
+                if (zoneSize.y <= 0) zoneSize.y = 200f;
+                
+                boundsObj.transform.localScale = new Vector3(zoneSize.x, 0.1f, zoneSize.y);
 
-            // Remove collider
-            DestroyImmediate(boundsObj.GetComponent<Collider>());
+                // Remove collider
+                Collider collider = boundsObj.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    DestroyImmediate(collider);
+                }
+                
+                Debug.Log($"Zone GameObject created: {zoneRoot.name}");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error creating zone GameObject: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         void LoadZoneData()
@@ -716,18 +930,64 @@ namespace RubyMMO.Editor
 
         List<PropData> GetPropsForCategory(PropCategory category)
         {
-            // Load props from a database or Resources folder
             List<PropData> props = new List<PropData>();
 
-            // Dummy data for now
-            props.Add(new PropData { name = "Tree_01", category = PropCategory.Nature });
-            props.Add(new PropData { name = "Rock_01", category = PropCategory.Nature });
-            props.Add(new PropData { name = "House_01", category = PropCategory.Buildings });
+            try
+            {
+                // Load props from PropDatabase
+                PropDatabase database = PropDatabase.GetDatabase();
+                if (database != null)
+                {
+                    List<PropDatabase.PropEntry> entries;
+                    
+                    if (category == PropCategory.All)
+                    {
+                        entries = database.GetPropsInCategory(PropCategory.All);
+                    }
+                    else
+                    {
+                        entries = database.GetPropsInCategory(category);
+                    }
 
-            if (category == PropCategory.All)
-                return props;
+                    // Convert PropDatabase entries to PropData
+                    foreach (var entry in entries)
+                    {
+                        if (entry != null && entry.prefab != null)
+                        {
+                            props.Add(new PropData
+                            {
+                                name = entry.displayName ?? entry.id ?? "Unknown",
+                                prefab = entry.prefab,
+                                icon = entry.thumbnail,
+                                category = entry.category
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("PropDatabase not found. Please create one using Ruby MMO/Setup/Initialize Zone Editor");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Error loading props from database: {e.Message}");
+            }
 
-            return props.Where(p => p.category == category).ToList();
+            // Fallback dummy data if database is empty or missing
+            if (props.Count == 0)
+            {
+                props.Add(new PropData { name = "Tree_01", category = PropCategory.Nature });
+                props.Add(new PropData { name = "Rock_01", category = PropCategory.Nature });
+                props.Add(new PropData { name = "House_01", category = PropCategory.Buildings });
+                
+                if (category != PropCategory.All)
+                {
+                    props = props.Where(p => p.category == category).ToList();
+                }
+            }
+
+            return props;
         }
     }
 
@@ -738,7 +998,7 @@ namespace RubyMMO.Editor
         public string zoneName = "New Zone";
         public int zoneID = 1000;
         public ZoneType zoneType = ZoneType.Outdoor;
-        public Vector2 zoneSize = new Vector2(256, 256);
+        public Vector2Int zoneSize = new Vector2Int(256, 256);
 
         public Color ambientColor = Color.gray;
         public Color fogColor = Color.gray;

@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using RubyEditor.Core;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace RubyEditor.Tools
 {
@@ -189,7 +192,7 @@ namespace RubyEditor.Tools
             HandleInput();
             UpdateBrushVisualization();
 
-            if (Input.GetMouseButton(0) && !Input.GetKey(KeyCode.LeftAlt))
+            if (IsMouseButtonPressed(0) && !IsKeyPressed(KeyCode.LeftAlt))
             {
                 PaintTerrain();
             }
@@ -198,38 +201,38 @@ namespace RubyEditor.Tools
         void HandleInput()
         {
             // Brush size
-            if (Input.GetKey(KeyCode.LeftBracket))
+            if (IsKeyPressed(KeyCode.LeftBracket))
                 brushSize = Mathf.Max(1f, brushSize - Time.deltaTime * 20f);
-            if (Input.GetKey(KeyCode.RightBracket))
+            if (IsKeyPressed(KeyCode.RightBracket))
                 brushSize = Mathf.Min(100f, brushSize + Time.deltaTime * 20f);
 
             // Brush strength
-            if (Input.GetKey(KeyCode.Minus))
+            if (IsKeyPressed(KeyCode.Minus))
                 brushStrength = Mathf.Max(0.01f, brushStrength - Time.deltaTime * 0.5f);
-            if (Input.GetKey(KeyCode.Equals))
+            if (IsKeyPressed(KeyCode.Equals))
                 brushStrength = Mathf.Min(1f, brushStrength + Time.deltaTime * 0.5f);
 
             // Texture selection
-            if (Input.GetKeyDown(KeyCode.Alpha1)) selectedTextureIndex = 0;
-            if (Input.GetKeyDown(KeyCode.Alpha2)) selectedTextureIndex = 1;
-            if (Input.GetKeyDown(KeyCode.Alpha3)) selectedTextureIndex = 2;
-            if (Input.GetKeyDown(KeyCode.Alpha4)) selectedTextureIndex = 3;
+            if (IsKeyDown(KeyCode.Alpha1)) selectedTextureIndex = 0;
+            if (IsKeyDown(KeyCode.Alpha2)) selectedTextureIndex = 1;
+            if (IsKeyDown(KeyCode.Alpha3)) selectedTextureIndex = 2;
+            if (IsKeyDown(KeyCode.Alpha4)) selectedTextureIndex = 3;
 
             selectedTextureIndex = Mathf.Clamp(selectedTextureIndex, 0, terrainLayers.Count - 1);
 
             // Mode switching
-            if (Input.GetKey(KeyCode.LeftShift)) currentMode = PaintMode.Erase;
-            else if (Input.GetKey(KeyCode.LeftControl)) currentMode = PaintMode.Smooth;
+            if (IsKeyPressed(KeyCode.LeftShift)) currentMode = PaintMode.Erase;
+            else if (IsKeyPressed(KeyCode.LeftControl)) currentMode = PaintMode.Smooth;
             else currentMode = PaintMode.Paint;
 
             // Rotation
-            if (Input.GetKey(KeyCode.R))
+            if (IsKeyPressed(KeyCode.R))
             {
-                brushRotation += Input.GetAxis("Mouse X") * 5f;
+                brushRotation += GetMouseAxisX() * 5f;
             }
 
             // Undo
-            if (Input.GetKey(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.Z))
+            if (IsKeyPressed(KeyCode.LeftControl) && IsKeyDown(KeyCode.Z))
             {
                 Undo();
             }
@@ -237,7 +240,7 @@ namespace RubyEditor.Tools
 
         void UpdateBrushVisualization()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(GetMousePosition());
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
                 Vector3 center = hit.point;
@@ -290,7 +293,7 @@ namespace RubyEditor.Tools
 
         void PaintTerrain()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(GetMousePosition());
             if (!Physics.Raycast(ray, out RaycastHit hit)) return;
             if (hit.collider.GetComponent<Terrain>() != targetTerrain) return;
 
@@ -486,5 +489,85 @@ namespace RubyEditor.Tools
             // Adjust alphamaps
             RefreshAlphamaps();
         }
+
+        // Input System compatibility methods
+        bool IsKeyPressed(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).isPressed;
+#else
+            return Input.GetKey(key);
+#endif
+        }
+
+        bool IsKeyDown(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(key);
+#endif
+        }
+
+        bool IsMouseButtonPressed(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).isPressed;
+#else
+            return Input.GetMouseButton(button);
+#endif
+        }
+
+        Vector3 GetMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector3.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
+        float GetMouseAxisX()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.delta.ReadValue().x : 0f;
+#else
+            return Input.GetAxis("Mouse X");
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Controls.KeyControl GetKeyFromKeyCode(KeyCode keyCode)
+        {
+            switch (keyCode)
+            {
+                case KeyCode.LeftBracket: return Keyboard.current.leftBracketKey;
+                case KeyCode.RightBracket: return Keyboard.current.rightBracketKey;
+                case KeyCode.Minus: return Keyboard.current.minusKey;
+                case KeyCode.Equals: return Keyboard.current.equalsKey;
+                case KeyCode.Alpha1: return Keyboard.current.digit1Key;
+                case KeyCode.Alpha2: return Keyboard.current.digit2Key;
+                case KeyCode.Alpha3: return Keyboard.current.digit3Key;
+                case KeyCode.Alpha4: return Keyboard.current.digit4Key;
+                case KeyCode.LeftShift: return Keyboard.current.leftShiftKey;
+                case KeyCode.LeftControl: return Keyboard.current.leftCtrlKey;
+                case KeyCode.R: return Keyboard.current.rKey;
+                case KeyCode.Z: return Keyboard.current.zKey;
+                case KeyCode.LeftAlt: return Keyboard.current.leftAltKey;
+                default: return Keyboard.current.spaceKey;
+            }
+        }
+
+        UnityEngine.InputSystem.Controls.ButtonControl GetMouseButtonFromInt(int button)
+        {
+            switch (button)
+            {
+                case 0: return Mouse.current.leftButton;
+                case 1: return Mouse.current.rightButton;
+                case 2: return Mouse.current.middleButton;
+                default: return Mouse.current.leftButton;
+            }
+        }
+#endif
     }
 }

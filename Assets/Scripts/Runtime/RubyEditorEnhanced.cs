@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using RubyEditor.Core;
 using RubyEditor.Tools;
 using RubyEditor.Data;
-
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 namespace RubyEditor.Core
+
 {
     public class RubyEditorEnhanced : MonoBehaviour
     {
@@ -109,10 +112,10 @@ namespace RubyEditor.Core
             tools[EditorMode.Place] = placementTool;
 
             // Terrain Tools
-            var terrainSculptTool = GetComponent<TerrainSculptTool>() ?? gameObject.AddComponent<TerrainSculptTool>();
+            var terrainSculptTool = GetComponent<RubyEditor.Tools.TerrainSculptTool>() ?? gameObject.AddComponent<RubyEditor.Tools.TerrainSculptTool>();
             tools[EditorMode.Terrain] = terrainSculptTool;
 
-            var terrainPaintTool = GetComponent<TerrainPaintTool>() ?? gameObject.AddComponent<TerrainPaintTool>();
+            var terrainPaintTool = GetComponent<RubyEditor.Tools.TerrainPaintTool>() ?? gameObject.AddComponent<RubyEditor.Tools.TerrainPaintTool>();
             tools[EditorMode.Paint] = terrainPaintTool;
         }
 
@@ -134,7 +137,7 @@ namespace RubyEditor.Core
             // Update UI
             if (uiManager != null && cameraController != null)
             {
-                Ray ray = cameraController.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition);
+                Ray ray = cameraController.GetComponent<Camera>().ScreenPointToRay(GetMousePosition());
                 if (Physics.Raycast(ray, out RaycastHit hit))
                 {
                     uiManager.UpdateCoordinates(hit.point);
@@ -145,31 +148,31 @@ namespace RubyEditor.Core
         void HandleInput()
         {
             // Mode switching
-            if (Input.GetKeyDown(KeyCode.Q)) SetMode(EditorMode.Select);
-            if (Input.GetKeyDown(KeyCode.W)) SetMode(EditorMode.Place);
-            if (Input.GetKeyDown(KeyCode.E)) SetMode(EditorMode.Paint);
-            if (Input.GetKeyDown(KeyCode.R)) SetMode(EditorMode.Terrain);
+            if (IsKeyDown(KeyCode.Q)) SetMode(EditorMode.Select);
+            if (IsKeyDown(KeyCode.W)) SetMode(EditorMode.Place);
+            if (IsKeyDown(KeyCode.E)) SetMode(EditorMode.Paint);
+            if (IsKeyDown(KeyCode.R)) SetMode(EditorMode.Terrain);
 
             // Save/Load
-            if (Input.GetKey(KeyCode.LeftControl))
+            if (IsKeyPressed(KeyCode.LeftControl))
             {
-                if (Input.GetKeyDown(KeyCode.S)) SaveZone();
-                if (Input.GetKeyDown(KeyCode.O)) LoadZone();
-                if (Input.GetKeyDown(KeyCode.N)) CreateNewZone();
+                if (IsKeyDown(KeyCode.S)) SaveZone();
+                if (IsKeyDown(KeyCode.O)) LoadZone();
+                if (IsKeyDown(KeyCode.N)) CreateNewZone();
             }
 
             // Grid toggle
-            if (Input.GetKeyDown(KeyCode.G))
+            if (IsKeyDown(KeyCode.G))
             {
                 gridSystem.showGrid = !gridSystem.showGrid;
                 gridSystem.snapToGrid = !gridSystem.snapToGrid;
             }
 
             // Undo/Redo (simplified)
-            if (Input.GetKey(KeyCode.LeftControl))
+            if (IsKeyPressed(KeyCode.LeftControl))
             {
-                if (Input.GetKeyDown(KeyCode.Z)) Undo();
-                if (Input.GetKeyDown(KeyCode.Y)) Redo();
+                if (IsKeyDown(KeyCode.Z)) Undo();
+                if (IsKeyDown(KeyCode.Y)) Redo();
             }
         }
 
@@ -369,6 +372,55 @@ namespace RubyEditor.Core
                 PlayerPrefs.SetString("RubyEditor_LastZone", currentZone.zoneName);
             }
         }
+
+        // Input System compatibility methods
+        bool IsKeyPressed(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).isPressed;
+#else
+            return Input.GetKey(key);
+#endif
+        }
+
+        bool IsKeyDown(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(key);
+#endif
+        }
+
+        Vector3 GetMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector3.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Controls.KeyControl GetKeyFromKeyCode(KeyCode keyCode)
+        {
+            switch (keyCode)
+            {
+                case KeyCode.Q: return Keyboard.current.qKey;
+                case KeyCode.W: return Keyboard.current.wKey;
+                case KeyCode.E: return Keyboard.current.eKey;
+                case KeyCode.R: return Keyboard.current.rKey;
+                case KeyCode.S: return Keyboard.current.sKey;
+                case KeyCode.O: return Keyboard.current.oKey;
+                case KeyCode.N: return Keyboard.current.nKey;
+                case KeyCode.G: return Keyboard.current.gKey;
+                case KeyCode.Z: return Keyboard.current.zKey;
+                case KeyCode.Y: return Keyboard.current.yKey;
+                case KeyCode.LeftControl: return Keyboard.current.leftCtrlKey;
+                default: return Keyboard.current.spaceKey;
+            }
+        }
+#endif
     }
 
     public enum NotificationType

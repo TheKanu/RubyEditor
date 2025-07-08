@@ -217,7 +217,7 @@ namespace RubyMMO.Editor
                 template.zoneName = "Template Zone";
                 template.zoneID = 1000;
                 template.zoneType = ZoneType.Outdoor;
-                template.zoneSize = new Vector2(256, 256);
+                template.zoneSize = new Vector2Int(256, 256);
                 template.ambientColor = new Color(0.5f, 0.5f, 0.5f);
                 template.fogColor = new Color(0.7f, 0.8f, 0.9f);
                 template.fogDensity = 0.01f;

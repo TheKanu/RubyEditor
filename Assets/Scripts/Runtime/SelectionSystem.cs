@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace RubyEditor.Core
 {
@@ -20,9 +23,9 @@ namespace RubyEditor.Core
 
         void HandleSelection()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (IsMouseButtonDown(0))
             {
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Ray ray = Camera.main.ScreenPointToRay(GetMousePosition());
                 RaycastHit hit;
 
                 if (Physics.Raycast(ray, out hit))
@@ -57,5 +60,37 @@ namespace RubyEditor.Core
             // Outline oder Material-Swap für Highlight
             // Implementierung folgt
         }
+
+        // Input System compatibility methods
+        bool IsMouseButtonDown(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).wasPressedThisFrame;
+#else
+            return Input.GetMouseButtonDown(button);
+#endif
+        }
+
+        Vector3 GetMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector3.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Controls.ButtonControl GetMouseButtonFromInt(int button)
+        {
+            switch (button)
+            {
+                case 0: return Mouse.current.leftButton;
+                case 1: return Mouse.current.rightButton;
+                case 2: return Mouse.current.middleButton;
+                default: return Mouse.current.leftButton;
+            }
+        }
+#endif
     }
 }

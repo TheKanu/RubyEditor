@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace RubyEditor.Core
 {
@@ -63,22 +66,22 @@ namespace RubyEditor.Core
 
         void HandleKeyboardMovement()
         {
-            float moveMultiplier = Input.GetKey(KeyCode.LeftShift) ? fastMoveMultiplier : 1f;
+            float moveMultiplier = IsKeyPressed(KeyCode.LeftShift) ? fastMoveMultiplier : 1f;
             Vector3 moveDirection = Vector3.zero;
 
             // WASD Movement
-            if (Input.GetKey(KeyCode.W)) moveDirection += cameraTransform.forward;
-            if (Input.GetKey(KeyCode.S)) moveDirection -= cameraTransform.forward;
-            if (Input.GetKey(KeyCode.A)) moveDirection -= cameraTransform.right;
-            if (Input.GetKey(KeyCode.D)) moveDirection += cameraTransform.right;
+            if (IsKeyPressed(KeyCode.W)) moveDirection += cameraTransform.forward;
+            if (IsKeyPressed(KeyCode.S)) moveDirection -= cameraTransform.forward;
+            if (IsKeyPressed(KeyCode.A)) moveDirection -= cameraTransform.right;
+            if (IsKeyPressed(KeyCode.D)) moveDirection += cameraTransform.right;
 
             // Remove Y component for horizontal movement
             moveDirection.y = 0;
             moveDirection.Normalize();
 
             // QE for vertical movement
-            if (Input.GetKey(KeyCode.Q)) moveDirection.y = -1;
-            if (Input.GetKey(KeyCode.E)) moveDirection.y = 1;
+            if (IsKeyPressed(KeyCode.Q)) moveDirection.y = -1;
+            if (IsKeyPressed(KeyCode.E)) moveDirection.y = 1;
 
             // Apply movement
             if (moveDirection != Vector3.zero)
@@ -90,19 +93,19 @@ namespace RubyEditor.Core
         void HandleMouseInput()
         {
             // Middle mouse button for panning
-            if (Input.GetMouseButtonDown(2))
+            if (IsMouseButtonDown(2))
             {
                 isDragging = true;
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = GetMousePosition();
             }
-            else if (Input.GetMouseButtonUp(2))
+            else if (IsMouseButtonUp(2))
             {
                 isDragging = false;
             }
 
             if (isDragging)
             {
-                Vector3 delta = Input.mousePosition - lastMousePosition;
+                Vector3 delta = GetMousePosition() - lastMousePosition;
                 Vector3 move = new Vector3(-delta.x, 0, -delta.y) * 0.05f;
 
                 // Transform to world space
@@ -110,23 +113,23 @@ namespace RubyEditor.Core
                 move.y = 0;
 
                 transform.position += move;
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = GetMousePosition();
             }
 
             // Right mouse button for rotation
-            if (Input.GetMouseButtonDown(1))
+            if (IsMouseButtonDown(1))
             {
                 isRotating = true;
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = GetMousePosition();
             }
-            else if (Input.GetMouseButtonUp(1))
+            else if (IsMouseButtonUp(1))
             {
                 isRotating = false;
             }
 
             if (isRotating)
             {
-                Vector3 delta = Input.mousePosition - lastMousePosition;
+                Vector3 delta = GetMousePosition() - lastMousePosition;
 
                 // Horizontal rotation (Y-axis)
                 transform.Rotate(Vector3.up, delta.x * rotationSpeed * Time.deltaTime, Space.World);
@@ -140,7 +143,7 @@ namespace RubyEditor.Core
 
                 transform.eulerAngles = new Vector3(newTilt, transform.eulerAngles.y, 0);
 
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = GetMousePosition();
             }
         }
 
@@ -149,7 +152,7 @@ namespace RubyEditor.Core
             if (isDragging || isRotating) return;
 
             Vector3 moveDirection = Vector3.zero;
-            Vector3 mousePos = Input.mousePosition;
+            Vector3 mousePos = GetMousePosition();
 
             // Check screen edges
             if (mousePos.x <= edgeScrollBorder)
@@ -173,7 +176,7 @@ namespace RubyEditor.Core
 
         void HandleZoom()
         {
-            float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+            float scrollInput = GetMouseScrollDelta();
             if (scrollInput != 0)
             {
                 targetZoom -= scrollInput * zoomSpeed;
@@ -201,7 +204,7 @@ namespace RubyEditor.Core
         void HandleRotation()
         {
             // Home key to reset rotation
-            if (Input.GetKeyDown(KeyCode.Home))
+            if (IsKeyDown(KeyCode.Home))
             {
                 transform.rotation = Quaternion.Euler(45f, 0f, 0f);
             }
@@ -266,5 +269,98 @@ namespace RubyEditor.Core
                                 editorCamera.farClipPlane, editorCamera.nearClipPlane,
                                 editorCamera.aspect);
         }
+
+        // Input System compatibility methods
+        bool IsKeyPressed(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).isPressed;
+#else
+            return Input.GetKey(key);
+#endif
+        }
+
+        bool IsKeyDown(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(key);
+#endif
+        }
+
+        bool IsMouseButtonPressed(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).isPressed;
+#else
+            return Input.GetMouseButton(button);
+#endif
+        }
+
+        bool IsMouseButtonDown(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).wasPressedThisFrame;
+#else
+            return Input.GetMouseButtonDown(button);
+#endif
+        }
+
+        bool IsMouseButtonUp(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).wasReleasedThisFrame;
+#else
+            return Input.GetMouseButtonUp(button);
+#endif
+        }
+
+        Vector3 GetMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector3.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
+        float GetMouseScrollDelta()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.scroll.ReadValue().y / 120f : 0f;
+#else
+            return Input.GetAxis("Mouse ScrollWheel");
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Controls.KeyControl GetKeyFromKeyCode(KeyCode keyCode)
+        {
+            switch (keyCode)
+            {
+                case KeyCode.W: return Keyboard.current.wKey;
+                case KeyCode.A: return Keyboard.current.aKey;
+                case KeyCode.S: return Keyboard.current.sKey;
+                case KeyCode.D: return Keyboard.current.dKey;
+                case KeyCode.Q: return Keyboard.current.qKey;
+                case KeyCode.E: return Keyboard.current.eKey;
+                case KeyCode.LeftShift: return Keyboard.current.leftShiftKey;
+                case KeyCode.Home: return Keyboard.current.homeKey;
+                default: return Keyboard.current.spaceKey;
+            }
+        }
+
+        UnityEngine.InputSystem.Controls.ButtonControl GetMouseButtonFromInt(int button)
+        {
+            switch (button)
+            {
+                case 0: return Mouse.current.leftButton;
+                case 1: return Mouse.current.rightButton;
+                case 2: return Mouse.current.middleButton;
+                default: return Mouse.current.leftButton;
+            }
+        }
+#endif
     }
 }

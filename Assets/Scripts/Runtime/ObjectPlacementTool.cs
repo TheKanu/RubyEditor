@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using RubyEditor.UI; // Add this line if EditorUIManager is in RubyEditor.UI namespace
 using RubyEditor;
 using RubyEditor.Core; // Add this line if EditorManager is in RubyEditor namespace
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace RubyEditor.Tools
 {
@@ -123,7 +126,7 @@ namespace RubyEditor.Tools
 
         void UpdatePreviewPosition()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ScreenPointToRay(GetMousePosition());
             RaycastHit hit;
 
             if (Physics.Raycast(ray, out hit, 1000f, placementLayers))
@@ -139,7 +142,7 @@ namespace RubyEditor.Tools
                 previewObject.transform.position = position;
 
                 // Align to surface normal if needed
-                if (Input.GetKey(KeyCode.LeftAlt))
+                if (IsKeyPressed(KeyCode.LeftAlt))
                 {
                     previewObject.transform.up = hit.normal;
                 }
@@ -188,7 +191,7 @@ namespace RubyEditor.Tools
         {
             if (!isValidPlacement) return;
 
-            if (Input.GetMouseButtonDown(0))
+            if (IsMouseButtonDown(0))
             {
                 switch (currentMode)
                 {
@@ -279,10 +282,10 @@ namespace RubyEditor.Tools
 
         void HandleModeSwitch()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1)) currentMode = PlacementMode.Single;
-            if (Input.GetKeyDown(KeyCode.Alpha2)) currentMode = PlacementMode.Brush;
-            if (Input.GetKeyDown(KeyCode.Alpha3)) currentMode = PlacementMode.Line;
-            if (Input.GetKeyDown(KeyCode.Alpha4)) currentMode = PlacementMode.Grid;
+            if (IsKeyDown(KeyCode.Alpha1)) currentMode = PlacementMode.Single;
+            if (IsKeyDown(KeyCode.Alpha2)) currentMode = PlacementMode.Brush;
+            if (IsKeyDown(KeyCode.Alpha3)) currentMode = PlacementMode.Line;
+            if (IsKeyDown(KeyCode.Alpha4)) currentMode = PlacementMode.Grid;
         }
 
         public void SetSelectedPrefab(int index)
@@ -316,6 +319,69 @@ namespace RubyEditor.Tools
                 Gizmos.DrawWireSphere(previewObject.transform.position, brushRadius);
             }
         }
+
+        // Input System compatibility methods
+        bool IsKeyPressed(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).isPressed;
+#else
+            return Input.GetKey(key);
+#endif
+        }
+
+        bool IsKeyDown(KeyCode key)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Keyboard.current != null && GetKeyFromKeyCode(key).wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(key);
+#endif
+        }
+
+        bool IsMouseButtonDown(int button)
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null && GetMouseButtonFromInt(button).wasPressedThisFrame;
+#else
+            return Input.GetMouseButtonDown(button);
+#endif
+        }
+
+        Vector3 GetMousePosition()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return Mouse.current != null ? Mouse.current.position.ReadValue() : Vector3.zero;
+#else
+            return Input.mousePosition;
+#endif
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        UnityEngine.InputSystem.Controls.KeyControl GetKeyFromKeyCode(KeyCode keyCode)
+        {
+            switch (keyCode)
+            {
+                case KeyCode.LeftAlt: return Keyboard.current.leftAltKey;
+                case KeyCode.Alpha1: return Keyboard.current.digit1Key;
+                case KeyCode.Alpha2: return Keyboard.current.digit2Key;
+                case KeyCode.Alpha3: return Keyboard.current.digit3Key;
+                case KeyCode.Alpha4: return Keyboard.current.digit4Key;
+                default: return Keyboard.current.spaceKey;
+            }
+        }
+
+        UnityEngine.InputSystem.Controls.ButtonControl GetMouseButtonFromInt(int button)
+        {
+            switch (button)
+            {
+                case 0: return Mouse.current.leftButton;
+                case 1: return Mouse.current.rightButton;
+                case 2: return Mouse.current.middleButton;
+                default: return Mouse.current.leftButton;
+            }
+        }
+#endif
     }
 
     // Base class for all editor tools
