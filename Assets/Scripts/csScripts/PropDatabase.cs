@@ -123,7 +123,7 @@ namespace RubyMMO.Editor
 
     // Custom Editor
     [CustomEditor(typeof(PropDatabase))]
-    public class PropDatabaseEditor : Editor
+    public class PropDatabaseEditor : UnityEditor.Editor
     {
         private PropDatabase database;
         private Vector2 scrollPos;

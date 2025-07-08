@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace RubyEditor.Core
@@ -8,11 +9,11 @@ namespace RubyEditor.Core
         [SerializeField] private float gridSize = 1f;
         [SerializeField] private int gridWidth = 100;
         [SerializeField] private int gridHeight = 100;
-        [SerializeField] private bool showGrid = true;
+        [SerializeField] public bool showGrid = true;
         [SerializeField] private Color gridColor = new Color(0.5f, 0.5f, 0.5f, 0.3f);
 
         [Header("Snapping")]
-        [SerializeField] private bool snapToGrid = true;
+        [SerializeField] public bool snapToGrid = true;
         [SerializeField] private float snapValue = 0.5f;
 
         private GameObject gridVisual;
@@ -61,6 +62,11 @@ namespace RubyEditor.Core
                 Vector3 end = new Vector3(gridWidth * gridSize, 0, z * gridSize);
                 Gizmos.DrawLine(start, end);
             }
+        }
+
+        internal bool SnapToGrid()
+        {
+            throw new NotImplementedException();
         }
     }
 }
