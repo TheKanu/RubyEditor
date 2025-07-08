@@ -108,9 +108,12 @@ namespace RubyEditor.Core
 
             tools[EditorMode.Place] = placementTool;
 
-            // Add more tools as they're created
-            // tools[EditorMode.Paint] = terrainPaintTool;
-            // tools[EditorMode.Terrain] = terrainSculptTool;
+            // Terrain Tools
+            var terrainSculptTool = GetComponent<TerrainSculptTool>() ?? gameObject.AddComponent<TerrainSculptTool>();
+            tools[EditorMode.Terrain] = terrainSculptTool;
+
+            var terrainPaintTool = GetComponent<TerrainPaintTool>() ?? gameObject.AddComponent<TerrainPaintTool>();
+            tools[EditorMode.Paint] = terrainPaintTool;
         }
 
         void SetupUI()
